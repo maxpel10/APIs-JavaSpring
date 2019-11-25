@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import unsl.entities.Balance;
 import unsl.entities.ResponseError;
-import unsl.entities.User;
 import unsl.services.BalanceService;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,12 +16,10 @@ public class BalanceController {
     @Autowired
     BalanceService balanceService;
 
-
     @PostMapping(value = "/cuentas")
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
     public Object createBalance(@RequestBody Balance balance) {
-
         //Control de que todos los campos sean enviados
         if(balance.getTipo_moneda() == null || balance.getTitular() == 0){
             return new ResponseEntity(new ResponseError(400, String.format("Id del titular y tipo de moneda de la cuenta requeridos.")), HttpStatus.NOT_FOUND);
@@ -44,7 +41,6 @@ public class BalanceController {
                 return new ResponseEntity(new ResponseError(400, String.format("El titular ya tiene una cuenta con tipo de moneda "+balance.getTipo_moneda()+".")), HttpStatus.NOT_FOUND);
         }
 
-
         //Opcional: Cuando es la primera cuenta de tipo peso la cuenta inicia con $500
         if(balance.getTipo_moneda() == Balance.Money.PESO_AR)
             balance.setSaldo(500.0);
@@ -55,6 +51,12 @@ public class BalanceController {
         long value = savedBalance.getId();
         map.put("id", value);
         return map;
+    }
+
+    @GetMapping(value = "/cuentas")
+    @ResponseBody
+    public Object getAll() {
+        return balanceService.getAll();
     }
 
     @GetMapping(value = "/cuentas/{id}")
@@ -81,10 +83,13 @@ public class BalanceController {
         return balance;
     }
 
-
     @PutMapping(value = "/cuentas/{id}")
     @ResponseBody
     public Object updateBalance(@PathVariable("id") Long id, @RequestBody Balance Balance) {
+        if(Balance.getSaldo()<0){
+            return new ResponseEntity(new ResponseError(400, String.format("Saldo inválido.", id)), HttpStatus.NOT_FOUND);
+        }
+
         Balance balance = balanceService.updateBalance(id,Balance);
         if ( balance == null) {
             return new ResponseEntity(new ResponseError(404, String.format("Cuenta con id %d no encontrado.", id)), HttpStatus.NOT_FOUND);

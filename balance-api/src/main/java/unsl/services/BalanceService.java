@@ -17,6 +17,10 @@ public class BalanceService {
     @Autowired
     RestService restService;
 
+    public List<Balance> getAll(){
+        return balanceRepository.findAll();
+    }
+
     public Balance getBalance(Long balanceId) {
         return balanceRepository.findById(balanceId).orElse(null);
     }
